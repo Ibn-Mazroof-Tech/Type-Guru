@@ -15,7 +15,10 @@ export default function SignupPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (password.length < 8) { setError("Password must be at least 8 characters."); return; }
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
     setLoading(true);
     setError("");
 
@@ -77,7 +80,9 @@ export default function SignupPage() {
       </form>
 
       <div className="relative my-5">
-        <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border" /></div>
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-border" />
+        </div>
         <div className="relative flex justify-center text-xs text-text-muted bg-bg-secondary px-2">or</div>
       </div>
 

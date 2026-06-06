@@ -1,4 +1,5 @@
 "use client";
+import Script from "next/script";
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -78,7 +79,7 @@ export default function PricingPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-5 py-8">
-      <script src="https://checkout.razorpay.com/v1/checkout.js" async />
+      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
 
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold mb-2">Simple, Honest Pricing</h1>
