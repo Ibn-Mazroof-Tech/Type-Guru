@@ -1,0 +1,43 @@
+.next/
+node_modules/
+/.pnp
+.pnp.js
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-lock.yaml
+dist/
+out/
+build/
+coverage/
+.cache/
+.vercel/
+.turbo/
+
+# Env files
+.env
+.env.*.local
+
+# Editor directories and files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+.DS_Store
+
+# Logs
+logs
+*.log
+
+# TypeScript
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# OS files
+Thumbs.db
+ehthumbs.db
+
+# Archives
+*.tgz
