@@ -1,11 +1,12 @@
 import { Suspense } from "react";
 import LoginForm from "./LoginForm";
 
-// Force dynamic rendering — prevents Next.js from trying to
-// statically generate this page, which breaks useSearchParams()
+// Force dynamic rendering for auth pages that depend on request search params.
 export const dynamic = "force-dynamic";
 
-export default function LoginPage() {
+export default function LoginPage({ searchParams }: { searchParams?: { callbackUrl?: string } }) {
+  const callbackUrl = searchParams?.callbackUrl ?? "/practice";
+
   return (
     <Suspense
       fallback={
@@ -14,7 +15,7 @@ export default function LoginPage() {
         </div>
       }
     >
-      <LoginForm />
+      <LoginForm callbackUrl={callbackUrl} />
     </Suspense>
   );
 }

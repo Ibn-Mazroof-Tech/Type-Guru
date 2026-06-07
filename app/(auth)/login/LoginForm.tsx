@@ -1,13 +1,11 @@
 "use client";
 import { FormEvent, useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-export default function LoginForm() {
-  const router      = useRouter();
-  const params      = useSearchParams();
-  const callbackUrl = params.get("callbackUrl") ?? "/practice";
+export default function LoginForm({ callbackUrl }: { callbackUrl: string }) {
+  const router = useRouter();
 
   const [email,    setEmail   ] = useState("");
   const [password, setPassword] = useState("");
