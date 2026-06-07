@@ -1,5 +1,6 @@
 "use client";
 import Script from "next/script";
+import Link from "next/link";
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -17,9 +18,11 @@ export default function PricingPage() {
   const router            = useRouter();
   const [yearly,  setYearly ] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
+  const [error,   setError]   = useState<string | null>(null);
 
   async function handlePurchase(plan: string, amount: number) {
     if (!session) { router.push("/signup"); return; }
+    setError(null);
     setLoading(plan);
 
     try {
@@ -27,8 +30,17 @@ export default function PricingPage() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body:   JSON.stringify({ plan, amount }),
       });
-      const { orderId, key } = await res.json();
+      const raw    = await res.text();
+      let data: any = {};
+      try { data = raw ? JSON.parse(raw) : {}; } catch { data = { error: raw || "Unexpected server response." }; }
+      if (!res.ok) {
+        throw new Error(data?.error || "Unable to create payment order.");
+      }
+      const { orderId, key } = data;
 
+      if (!window.Razorpay) {
+        throw new Error("Razorpay checkout is not loaded yet. Please refresh the page.");
+      }
       const rzp = new window.Razorpay({
         key,
         amount,
@@ -48,6 +60,8 @@ export default function PricingPage() {
       });
       rzp.open();
     } catch (err) {
+      const message = err instanceof Error ? err.message : "Payment failed. Please try again.";
+      setError(message);
       console.error(err);
     } finally {
       setLoading(null);
@@ -99,6 +113,11 @@ export default function PricingPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+        {error && (
+          <div className="col-span-1 md:col-span-3 card p-4 bg-[#4C1D95]/10 border border-[#4C1D95]/20 text-sm text-[#E9D5FF]">
+            {error}
+          </div>
+        )}
         {plans.map((p) => (
           <div key={p.name}
             className="card p-6 relative transition-all duration-300 hover:-translate-y-1"
@@ -135,7 +154,7 @@ export default function PricingPage() {
             </ul>
 
             <button
-              disabled={loading === p.plan || (!p.plan && !!session)}
+              disabled={loading === p.plan}
               onClick={() => {
                 if (!p.plan) { router.push(session ? "/practice" : "/signup"); return; }
                 handlePurchase(p.plan, p.amount);
@@ -166,10 +185,10 @@ export default function PricingPage() {
             <div className="text-text-muted text-xs mb-3">{c.sub}</div>
             <div className="flex items-center justify-between">
               <span className="font-mono font-bold text-lg">{c.price}</span>
-              <button className="text-xs font-bold px-3 py-1.5 rounded-lg border transition-all hover:opacity-80"
+              <Link href="/certificates" className="text-xs font-bold px-3 py-1.5 rounded-lg border transition-all hover:opacity-80"
                 style={{ background: c.color + "15", borderColor: c.color + "30", color: c.color }}>
                 Get Cert
-              </button>
+              </Link>
             </div>
           </div>
         ))}
@@ -181,10 +200,11 @@ export default function PricingPage() {
         <p className="text-text-muted text-sm max-w-md mx-auto mb-5">
           Onboard teams, verify candidate typing skills, issue bulk certificates. Trusted by 200+ HR teams.
         </p>
-        <button className="text-sm font-bold px-7 py-2.5 rounded-xl"
+        <a href="mailto:sales@typeguru.app"
+          className="inline-flex items-center justify-center text-sm font-bold px-7 py-2.5 rounded-xl"
           style={{ background: "linear-gradient(135deg,#FFB800,#FF8800)", color: "#000" }}>
           Contact Sales →
-        </button>
+        </a>
       </div>
     </div>
   );

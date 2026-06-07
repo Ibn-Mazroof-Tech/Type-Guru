@@ -19,6 +19,15 @@ export async function POST(req: NextRequest) {
   const { plan, amount } = parsed.data;
   if (amount !== PLAN_PRICES[plan]) return NextResponse.json({ error: "Amount mismatch." }, { status: 400 });
 
-  const order = await createOrder(amount, `tg_${session.user.id}_${Date.now()}`);
-  return NextResponse.json({ orderId: order.id, key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, amount });
+  if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET || !process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID) {
+    return NextResponse.json({ error: "Payment configuration missing on the server." }, { status: 500 });
+  }
+
+  try {
+    const order = await createOrder(amount, `tg_${session.user.id}_${Date.now()}`);
+    return NextResponse.json({ orderId: order.id, key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, amount });
+  } catch (error) {
+    console.error("Razorpay order creation failed:", error);
+    return NextResponse.json({ error: "Unable to create payment order. Please try again later." }, { status: 500 });
+  }
 }

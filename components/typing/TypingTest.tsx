@@ -165,7 +165,7 @@ export function TypingTest() {
   // ── Render typed text with colour coding ──────────────────
   const renderText = () =>
     text.split("").map((char, i) => {
-      let style: React.CSSProperties = { color: "#27304A" };
+      let style: React.CSSProperties = { color: "#D8E4FF" };
       if (i < typed.length) {
         style = typed[i] === char
           ? { color: "#00E5FF" }

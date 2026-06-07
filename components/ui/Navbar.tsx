@@ -43,6 +43,18 @@ export function Navbar() {
           ))}
         </div>
 
+        <button
+          type="button"
+          onClick={() => setOpen((prev) => !prev)}
+          className="md:hidden flex items-center justify-center w-10 h-10 rounded-lg border border-border text-text-muted hover:text-text-primary transition-all">
+          <span className="sr-only">Toggle navigation</span>
+          <div className="space-y-1.5">
+            <span className="block h-[2px] w-5 bg-current" />
+            <span className="block h-[2px] w-5 bg-current" />
+            <span className="block h-[2px] w-5 bg-current" />
+          </div>
+        </button>
+
         {/* Auth Buttons */}
         <div className="flex gap-2 shrink-0 items-center">
           {session ? (
@@ -74,6 +86,24 @@ export function Navbar() {
           )}
         </div>
       </div>
+      {open && (
+        <div className="md:hidden bg-bg-secondary border-t border-border">
+          <div className="max-w-6xl mx-auto px-5 py-3 space-y-2">
+            {NAV_LINKS.map((l) => (
+              <Link key={l.href} href={l.href}
+                onClick={() => setOpen(false)}
+                className={cn(
+                  "block rounded-xl px-4 py-3 text-sm font-medium transition-all",
+                  pathname === l.href
+                    ? "bg-brand-cyan/10 text-brand-cyan"
+                    : "text-text-muted hover:text-text-primary"
+                )}>
+                {l.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
     </nav>
   );
 }
