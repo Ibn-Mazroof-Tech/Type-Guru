@@ -72,7 +72,7 @@ export default function PricingPage() {
     {
       name: "Free", price: "₹0", sub: "Forever free", color: "#58698A", popular: false,
       plan: null, amount: 0,
-      features: ["General + Govt + Data Entry modes", "60-second timed tests", "Basic progress tracking", "Leaderboard access", "5 tests per day"],
+      features: ["All 5 modes: General, Govt, Data, Coding, Arabic", "60-second timed tests", "Basic progress tracking", "Leaderboard access", "5 tests per day"],
       cta: "Start Free",
     },
     {
@@ -80,7 +80,7 @@ export default function PricingPage() {
       color: "#00E5FF", popular: true,
       plan: yearly ? "pro_yearly" : "pro_monthly",
       amount: yearly ? 199900 : 29900,
-      features: ["All 5 modes incl. Coding & Arabic", "Unlimited daily tests", "Full AI weakness analysis", "Personalized drill plans", "Certificates at ₹49 each", "Ad-free · Priority support"],
+      features: ["Unlimited daily tests", "Full AI weakness analysis", "Personalized drill plans", "Discounted certificates", "Ad-free · Priority support"],
       cta: "Start 7-Day Trial",
     },
     {
@@ -97,7 +97,7 @@ export default function PricingPage() {
 
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold mb-2">Simple, Honest Pricing</h1>
-        <p className="text-text-muted mb-5">Start free. Upgrade when ready. No hidden fees — ever.</p>
+        <p className="text-text-muted mb-5">Practice all modes free. Pay only when you want a verified certificate or premium coaching features.</p>
         <div className="inline-flex bg-bg-tertiary rounded-xl p-1 gap-1">
           {[[false,"Monthly"],[true,"Yearly 🎉 −33%"]].map(([v,l]) => (
             <button key={String(v)} onClick={() => setYearly(v as boolean)}

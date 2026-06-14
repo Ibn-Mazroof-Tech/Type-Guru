@@ -36,9 +36,12 @@ export const MODE_LABELS: Record<string, string> = {
   data:       "Data Entry",
   coding:     "Code Typing",
   arabic:     "Arabic / Urdu",
+  race:       "Race",
+  falling:    "Falling Words",
+  "word-builder": "Word Builder",
 };
 
-export const PRO_MODES = ["coding", "arabic"];
+export const PRO_MODES: string[] = [];
 
 export function isPro(plan: string): boolean {
   return plan === "pro" || plan === "pro_monthly" || plan === "pro_yearly" || plan === "daypass";

@@ -9,7 +9,7 @@ const schema = z.object({
   wpm:      z.number().int().min(1).max(300),
   accuracy: z.number().int().min(0).max(100),
   errors:   z.number().int().min(0),
-  mode:     z.enum(["general","government","data","coding","arabic"]),
+  mode:     z.enum(["general","government","data","coding","arabic","race","falling","word-builder"]),
   duration: z.number().int().default(60),
 });
 

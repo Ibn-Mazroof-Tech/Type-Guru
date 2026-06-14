@@ -1,9 +1,8 @@
 import { auth } from "@/lib/auth/config";
 import { NextResponse } from "next/server";
 
-const PUBLIC_ROUTES    = ["/", "/login", "/signup", "/pricing"];
-const PRO_ONLY_ROUTES  = ["/coach", "/certificates"];
-const PRO_ONLY_MODES   = ["coding", "arabic"];
+const PUBLIC_ROUTES   = ["/", "/login", "/signup", "/pricing"];
+const PRO_ONLY_ROUTES = ["/coach"];
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;
@@ -19,7 +18,7 @@ export default auth((req) => {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Require Pro plan for coach and certificates
+  // Require Pro plan only for coach
   const isPro = ["pro", "pro_monthly", "pro_yearly", "daypass"].includes(
     session.user?.plan ?? "free"
   );

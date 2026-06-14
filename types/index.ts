@@ -1,4 +1,12 @@
-export type TypingMode = "general" | "government" | "data" | "coding" | "arabic";
+export type TypingMode =
+  | "general"
+  | "government"
+  | "data"
+  | "coding"
+  | "arabic"
+  | "race"
+  | "falling"
+  | "word-builder";
 export type UserPlan  = "free" | "pro" | "daypass";
 export type CertType  = "govt_typing" | "data_entry" | "speed_typist";
 
