@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Navbar } from "@/components/ui/Navbar";
+import { Navbar }    from "@/components/ui/Navbar";
 import { Providers } from "@/components/providers/SessionProvider";
 
 export const metadata: Metadata = {
@@ -23,7 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <main>{children}</main>
           <footer className="border-t border-border mt-20 py-6 px-6 text-center text-text-muted text-xs">
             <span className="font-brand text-brand-cyan mr-3 text-sm">TYPEGURU</span>
-            © 2024 TypeGuru · Made in India 🇮🇳 · Empowering 2.4 Lakh+ Typists
+            © {new Date().getFullYear()} TypeGuru · Made in India 🇮🇳 · Empowering 2.4 Lakh+ Typists
           </footer>
         </Providers>
       </body>

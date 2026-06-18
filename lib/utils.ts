@@ -18,8 +18,8 @@ export function getAccuracyColor(acc: number): string {
 
 export function getPlanEndDate(plan: string): Date {
   const now = new Date();
-  if (plan === "daypass")     { now.setDate(now.getDate() + 1);   return now; }
-  if (plan === "pro_monthly") { now.setMonth(now.getMonth() + 1); return now; }
+  if (plan === "daypass")     { now.setDate(now.getDate() + 1);        return now; }
+  if (plan === "pro_monthly") { now.setMonth(now.getMonth() + 1);      return now; }
   if (plan === "pro_yearly")  { now.setFullYear(now.getFullYear() + 1); return now; }
   return now;
 }
@@ -43,6 +43,13 @@ export const MODE_LABELS: Record<string, string> = {
 
 export const PRO_MODES: string[] = [];
 
-export function isPro(plan: string): boolean {
-  return plan === "pro" || plan === "pro_monthly" || plan === "pro_yearly" || plan === "daypass";
+// Accepts null/undefined gracefully — returns false instead of throwing
+export function isPro(plan: string | null | undefined): boolean {
+  if (!plan) return false;
+  return (
+    plan === "pro"         ||
+    plan === "pro_monthly" ||
+    plan === "pro_yearly"  ||
+    plan === "daypass"
+  );
 }

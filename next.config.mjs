@@ -1,8 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    serverComponentsExternalPackages: ["@neondatabase/serverless"],
-  },
+  // Moved to stable top-level key in Next.js 14.2+
+  serverExternalPackages: ["@neondatabase/serverless"],
+
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "**.googleusercontent.com" },

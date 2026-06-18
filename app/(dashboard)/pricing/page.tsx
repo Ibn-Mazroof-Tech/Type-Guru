@@ -14,8 +14,9 @@ const CERTS = [
 declare global { interface Window { Razorpay: new (options: Record<string, unknown>) => { open(): void }; } }
 
 export default function PricingPage() {
-  const { data: session } = useSession();
-  const router            = useRouter();
+  // FIX: destructure `update` alongside `data` so we can refresh the JWT after payment
+  const { data: session, update } = useSession();
+  const router                    = useRouter();
   const [yearly,  setYearly ] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
   const [error,   setError]   = useState<string | null>(null);
@@ -26,21 +27,21 @@ export default function PricingPage() {
     setLoading(plan);
 
     try {
-      const res     = await fetch("/api/payments/create", {
+      const res  = await fetch("/api/payments/create", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body:   JSON.stringify({ plan, amount }),
       });
-      const raw    = await res.text();
+      const raw     = await res.text();
       let data: any = {};
       try { data = raw ? JSON.parse(raw) : {}; } catch { data = { error: raw || "Unexpected server response." }; }
-      if (!res.ok) {
-        throw new Error(data?.error || "Unable to create payment order.");
-      }
+      if (!res.ok) throw new Error(data?.error || "Unable to create payment order.");
+
       const { orderId, key } = data;
 
       if (!window.Razorpay) {
         throw new Error("Razorpay checkout is not loaded yet. Please refresh the page.");
       }
+
       const rzp = new window.Razorpay({
         key,
         amount,
@@ -48,13 +49,30 @@ export default function PricingPage() {
         name:     "TypeGuru",
         description: plan,
         order_id: orderId,
+
+        // FIX: verify payment, refresh the JWT so the new plan is reflected
+        // immediately in the Navbar and any Pro-gated server components.
         handler: async (response: Record<string, string>) => {
-          await fetch("/api/payments/verify", {
+          const verifyRes = await fetch("/api/payments/verify", {
             method: "POST", headers: { "Content-Type": "application/json" },
             body:   JSON.stringify({ ...response, plan }),
           });
+
+          if (!verifyRes.ok) {
+            setError("Payment captured but server verification failed. Please contact support@typeguru.app with your payment ID.");
+            return;
+          }
+
+          // Trigger NextAuth to re-run the jwt callback with trigger="update",
+          // which fetches the fresh plan from the DB and saves it to the cookie.
+          await update();
+
+          // Re-render server components so the Navbar + any server-side checks
+          // immediately reflect the new Pro plan.
+          router.refresh();
           router.push("/practice?upgraded=true");
         },
+
         prefill: { name: session.user.name, email: session.user.email },
         theme:   { color: "#00E5FF" },
       });

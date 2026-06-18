@@ -217,11 +217,6 @@ export default function WordBuilderGame() {
 
   return (
     <div className="max-w-3xl mx-auto px-5 py-6">
-      <h2 className="text-xl font-bold mb-3">Word Builder</h2>
-      <p className="text-text-muted mb-4">
-        Unscramble each word before its timer runs out. Three misses end the session.
-      </p>
-
       <div className="flex flex-wrap items-end gap-3 mb-4">
         <label className="text-sm text-text-muted">
           <span className="block mb-1">Session</span>

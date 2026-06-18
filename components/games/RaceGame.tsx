@@ -61,6 +61,16 @@ function countMistakes(typed: string, content: string) {
   return mistakes + Math.abs(typed.length - content.length);
 }
 
+function getCorrectPrefixLength(typed: string, content: string, startAt = 0) {
+  let index = startAt;
+
+  while (index < typed.length && index < content.length && typed[index] === content[index]) {
+    index++;
+  }
+
+  return index;
+}
+
 export default function RaceGame() {
   const [duration, setDuration] = useState(60);
   const [started, setStarted] = useState(false);
@@ -80,6 +90,7 @@ export default function RaceGame() {
   const startedRef = useRef(false);
   const contentRef = useRef(content);
   const typedRef = useRef("");
+  const correctCharsRef = useRef(0);
   const aiCharsRef = useRef(0);
   const aiWpmRef = useRef<number>(aiWpm);
   const playerProgressRef = useRef(0);
@@ -107,8 +118,9 @@ export default function RaceGame() {
     const elapsedMinutes = elapsedMs / 60000;
     const mistakes = countMistakes(currentTyped, currentContent);
     const typedChars = Math.min(currentTyped.length, currentContent.length);
+    const correctChars = correctCharsRef.current;
     const grossWpm = Math.round((typedChars / 5) / elapsedMinutes);
-    const netWpm = Math.max(0, Math.round(((typedChars - mistakes) / 5) / elapsedMinutes));
+    const netWpm = Math.max(0, Math.round((correctChars / 5) / elapsedMinutes));
 
     let winner: RaceResult["winner"] = "draw";
     if (reason === "player") {
@@ -195,6 +207,7 @@ export default function RaceGame() {
     clearRaceTimer();
     contentRef.current = nextContent;
     typedRef.current = "";
+    correctCharsRef.current = 0;
     aiCharsRef.current = 0;
     aiWpmRef.current = nextAiWpm;
     playerProgressRef.current = 0;
@@ -217,27 +230,35 @@ export default function RaceGame() {
     finishRace("stopped");
   };
 
-  const handleTypedChange = (value: string) => {
-    const limitedValue = value.slice(0, contentRef.current.length);
-    const progress = Math.min(100, Math.round((limitedValue.length / Math.max(1, contentRef.current.length)) * 100));
+  const handleTypedChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = event.currentTarget.value;
+    const currentContent = contentRef.current;
+    const lockedLength = correctCharsRef.current;
+    const lockedPrefix = currentContent.slice(0, lockedLength);
+    const limitedValue = value.slice(0, currentContent.length);
+
+    if (!limitedValue.startsWith(lockedPrefix)) {
+      event.currentTarget.value = typedRef.current;
+      setTyped(typedRef.current);
+      return;
+    }
+
+    const nextCorrectLength = getCorrectPrefixLength(limitedValue, currentContent, lockedLength);
+    const progress = Math.min(100, Math.round((nextCorrectLength / Math.max(1, currentContent.length)) * 100));
 
     typedRef.current = limitedValue;
+    correctCharsRef.current = nextCorrectLength;
     playerProgressRef.current = progress;
     setTyped(limitedValue);
     setPlayerProgress(progress);
 
-    if (startedRef.current && progress >= 100) {
+    if (startedRef.current && nextCorrectLength >= currentContent.length) {
       finishRace("player");
     }
   };
 
   return (
     <div className="max-w-3xl mx-auto px-5 py-6">
-      <h2 className="text-xl font-bold mb-3">Race Mode</h2>
-      <p className="text-text-muted mb-4">
-        Race against an AI opponent. Finish the shown text before the timer or opponent reaches the line.
-      </p>
-
       <div className="flex flex-wrap gap-3 items-end mb-4">
         <label className="text-sm text-text-muted">
           <span className="block mb-1">Duration</span>
@@ -321,7 +342,7 @@ export default function RaceGame() {
 
         <textarea
           value={typed}
-          onChange={(e) => handleTypedChange(e.target.value)}
+          onChange={handleTypedChange}
           disabled={!started || playerProgress >= 100 || aiProgress >= 100}
           className="w-full p-3 rounded border border-border bg-bg-primary text-white min-h-[110px]"
           placeholder="Type the shown content to advance..."

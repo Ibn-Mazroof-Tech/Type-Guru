@@ -13,7 +13,11 @@ export const metadata: Metadata = { title: "AI Coach — TypeGuru" };
 
 export default async function CoachPage() {
   const session = await auth();
-  if (!session) redirect("/login");
+  if (!session?.user) redirect("/login");
+
+  // isPro now accepts null/undefined safely.
+  // session.user.plan comes from the JWT token — it is refreshed from the DB
+  // whenever the client calls update() (e.g. after a Razorpay payment).
   if (!isPro(session.user.plan)) redirect("/pricing?upgrade=true");
 
   const recentTests = await db

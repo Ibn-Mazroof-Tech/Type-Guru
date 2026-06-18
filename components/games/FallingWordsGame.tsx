@@ -85,9 +85,6 @@ export default function FallingWordsGame() {
 
   return (
     <div className="max-w-3xl mx-auto px-5 py-6">
-      <h2 className="text-xl font-bold mb-3">Falling Words</h2>
-      <p className="text-text-muted mb-4">Words fall from the top; type them before they hit the ground. Levels increase spawn rate and speed.</p>
-
       <div className="flex items-center gap-3 mb-4">
         <button onClick={() => { setStarted(true); setWords([]); setScore(0); setLives(5); setLevel(1); }} className="btn-primary">Start</button>
         <button onClick={() => { setStarted(false); }} className="btn-outline">Stop</button>

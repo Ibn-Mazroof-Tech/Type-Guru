@@ -17,6 +17,10 @@ export function Navbar() {
   const pathname         = usePathname();
   const { data: session} = useSession();
   const [open, setOpen]  = useState(false);
+  const isActivePath = (href: string) => {
+    if (href === "/") return pathname === "/";
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
 
   return (
     <nav className="sticky top-0 z-50 bg-bg-primary/97 backdrop-blur-xl border-b border-border">
@@ -34,7 +38,7 @@ export function Navbar() {
             <Link key={l.href} href={l.href}
               className={cn(
                 "px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap",
-                pathname === l.href
+                isActivePath(l.href)
                   ? "bg-brand-cyan/10 border border-brand-cyan/25 text-brand-cyan font-bold"
                   : "text-text-muted hover:text-text-primary border border-transparent"
               )}>
@@ -94,7 +98,7 @@ export function Navbar() {
                 onClick={() => setOpen(false)}
                 className={cn(
                   "block rounded-xl px-4 py-3 text-sm font-medium transition-all",
-                  pathname === l.href
+                  isActivePath(l.href)
                     ? "bg-brand-cyan/10 text-brand-cyan"
                     : "text-text-muted hover:text-text-primary"
                 )}>

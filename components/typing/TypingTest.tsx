@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { ModeSelector, MODES, type ModeId } from "./ModeSelector";
+import { ModeNav, MODES, type ModeId } from "./ModeSelector";
 import { StatsBar } from "./StatsBar";
 
 const TEXTS: Record<ModeId, string[]> = {
@@ -151,6 +151,27 @@ const scrambleWord = (word: string) => {
   return chars.join("");
 };
 
+const getCorrectPrefixLength = (typed: string, text: string, startAt = 0) => {
+  let index = startAt;
+
+  while (index < typed.length && index < text.length && typed[index] === text[index]) {
+    index++;
+  }
+
+  return index;
+};
+
+const countCorrectCharacters = (typed: string, text: string) => {
+  let count = 0;
+  const checkedLength = Math.min(typed.length, text.length);
+
+  for (let i = 0; i < checkedLength; i++) {
+    if (typed[i] === text[i]) count++;
+  }
+
+  return count;
+};
+
 const getRequiredTextLength = (duration: number) => {
   // Ensure enough text for fast typists across all durations.
   return Math.max(duration * 18, 900);
@@ -208,14 +229,18 @@ const getTextForMode = (id: ModeId, duration: number, codeLanguage: CodeLanguage
   return text.trim();
 };
 
-export function TypingTest() {
+interface TypingTestProps {
+  initialMode?: ModeId;
+}
+
+export function TypingTest({ initialMode = "general" }: TypingTestProps) {
   const { data: session } = useSession();
   const router            = useRouter();
   const userPlan          = session?.user?.plan ?? "free";
 
-  const [mode,      setMode     ] = useState<ModeId>("general");
+  const [mode,      setMode     ] = useState<ModeId>(initialMode);
   const [duration,  setDuration ] = useState<number>(60);
-  const [text,      setText     ] = useState<string>(() => getTextForMode("general", 60));
+  const [text,      setText     ] = useState<string>(() => getTextForMode(initialMode, 60));
   const [typed,     setTyped    ] = useState("");
   const [scrambledWord, setScrambledWord] = useState("");
   const [targetWord, setTargetWord] = useState("");
@@ -232,18 +257,10 @@ export function TypingTest() {
   const textAreaRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const startRef = useRef<number | null>(null);
-
-  // Fetch remote text samples for variability
-  const fetchGeneralText = async (desiredLength: number) => {
-    try {
-      const res = await fetch("https://baconipsum.com/api/?type=meat-and-filler&paras=3&format=text");
-      if (!res.ok) return null;
-      const t = await res.text();
-      return t.slice(0, Math.max(desiredLength, 400));
-    } catch (err) {
-      return null;
-    }
-  };
+  const typedRef = useRef("");
+  const textRef = useRef(text);
+  const correctCharsRef = useRef(0);
+  const lockedPrefixRef = useRef(0);
 
   const fetchDataEntryText = async () => {
     try {
@@ -301,8 +318,7 @@ export function TypingTest() {
         const remote = await fetchDataEntryText();
         if (mounted && remote) setText(remote);
       } else if (mode === 'general') {
-        const remote = await fetchGeneralText(duration);
-        if (mounted && remote) setText(remote);
+        setText(getTextForMode('general', duration, codeLanguage));
       } else if (mode === 'coding') {
         // regenerate code text for selected language
         setText(getTextForMode('coding', duration, codeLanguage));
@@ -319,6 +335,10 @@ export function TypingTest() {
       prepareGameMode(mode, duration, codeLanguage);
     }
   }, [mode, duration, codeLanguage, prepareGameMode]);
+
+  useEffect(() => {
+    textRef.current = text;
+  }, [text]);
 
   // ── Transliteration (Urdu) ─────────────────────────────────
   useEffect(() => {
@@ -409,54 +429,77 @@ export function TypingTest() {
     }
   }, [done, duration, mode, acc, errors, session?.user, wpm]);
 
-  const handleType = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const val = e.target.value;
-    if (!started && val.length === 1) { setStarted(true); startRef.current = Date.now(); }
-    setTyped(val);
+  const updateTypingValue = useCallback((nextRawValue: string, target?: HTMLTextAreaElement) => {
+    const currentText = textRef.current;
+    const lockedLength = lockedPrefixRef.current;
+    const lockedPrefix = currentText.slice(0, lockedLength);
+    const nextValue = nextRawValue.slice(0, currentText.length);
+
+    if (!nextValue.startsWith(lockedPrefix)) {
+      if (target) target.value = typedRef.current;
+      setTyped(typedRef.current);
+      return false;
+    }
+
+    if (!started && nextValue.length > 0) {
+      setStarted(true);
+      startRef.current = Date.now();
+    }
+
+    const nextLockedPrefix = getCorrectPrefixLength(nextValue, currentText, lockedLength);
+    const nextCorrectChars = countCorrectCharacters(nextValue, currentText);
+    typedRef.current = nextValue;
+    lockedPrefixRef.current = nextLockedPrefix;
+    correctCharsRef.current = nextCorrectChars;
+    setTyped(nextValue);
 
     if (startRef.current) {
       const mins  = (Date.now() - startRef.current) / 60000;
-      const words = val.trim().split(/\s+/).filter(Boolean).length;
-      const gross = mins > 0.01 ? Math.round(words / mins) : 0;
+      const gross = mins > 0.01 ? Math.round((nextValue.length / 5) / mins) : 0;
       setGrossWpm(gross);
 
-      let ok = 0, er = 0;
-      for (let i = 0; i < val.length; i++) {
-        if (val[i] === text[i]) ok++; else er++;
+      let er = 0;
+      for (let i = 0; i < nextValue.length; i++) {
+        if (nextValue[i] !== currentText[i]) er++;
       }
-      const net = mins > 0.01 ? Math.round((ok / 5) / mins) : 0;
+      const net = mins > 0.01 ? Math.round((nextCorrectChars / 5) / mins) : 0;
       setWpm(net);
-      setAcc(val.length > 0 ? Math.round((ok / val.length) * 100) : 100);
+      setAcc(nextValue.length > 0 ? Math.round((nextCorrectChars / nextValue.length) * 100) : 100);
       setErrors(er);
     }
 
-    if (val.length >= text.length) {
+    if (nextCorrectChars >= currentText.length) {
       clearInterval(timerRef.current!);
       setDone(true);
       setStarted(false);
     }
-  }, [started, text]);
+
+    return true;
+  }, [started]);
+
+  const handleType = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    updateTypingValue(e.currentTarget.value, e.currentTarget);
+  }, [updateTypingValue]);
 
   const reset = useCallback((selectedMode?: ModeId, selectedDuration?: number, selectedLanguage?: CodeLanguage) => {
     if (timerRef.current) clearInterval(timerRef.current);
     const nextDuration = selectedDuration ?? duration;
     setTyped(""); setStarted(false); setDone(false);
-    setTime(nextDuration); setWpm(0); setAcc(100); setErrors(0);
+    typedRef.current = "";
+    correctCharsRef.current = 0;
+    lockedPrefixRef.current = 0;
+    setTime(nextDuration); setWpm(0); setGrossWpm(0); setAcc(100); setErrors(0);
     prepareGameMode(selectedMode ?? mode, nextDuration, selectedLanguage ?? codeLanguage);
     startRef.current = null;
     setTimeout(() => inputRef.current?.focus(), 50);
-  }, [codeLanguage, duration, mode]);
+  }, [codeLanguage, duration, mode, prepareGameMode]);
 
-  const selectMode = (id: ModeId) => {
-    // For full-game modes, navigate to their dedicated pages.
-    if (id === "race" || id === "falling" || id === "word-builder") {
-      router.push(`/games/${id}`);
-      return;
-    }
+  useEffect(() => {
+    if (initialMode === mode) return;
 
-    setMode(id);
-    reset(id, duration, id === "coding" ? codeLanguage : undefined);
-  };
+    setMode(initialMode);
+    reset(initialMode, duration, initialMode === "coding" ? codeLanguage : undefined);
+  }, [codeLanguage, duration, initialMode, mode, reset]);
 
   const selectDuration = (value: number) => {
     setDuration(value);
@@ -470,7 +513,7 @@ export function TypingTest() {
     }
   };
   const modeInfo   = MODES.find((m) => m.id === mode)!;
-  const progress   = Math.round((typed.length / text.length) * 100);
+  const progress   = Math.round((correctCharsRef.current / text.length) * 100);
 
   // ── Render typed text with colour coding ──────────────────
   const renderText = () =>
@@ -493,10 +536,7 @@ export function TypingTest() {
 
   return (
     <div className="max-w-3xl mx-auto px-5 py-6">
-      <ModeSelector
-        selected={mode}
-        onSelect={selectMode}
-      />
+      <ModeNav selected={mode} />
 
       {mode === "coding" && (
         <div className="mb-5">
@@ -591,15 +631,13 @@ export function TypingTest() {
               const start = target.selectionStart ?? 0;
               const end = target.selectionEnd ?? 0;
               const next = typed.slice(0, start) + "    " + typed.slice(end);
-              setTyped(next);
-              window.requestAnimationFrame(() => {
-                if (inputRef.current) {
-                  inputRef.current.selectionStart = inputRef.current.selectionEnd = start + 4;
-                }
-              });
-              if (!started) {
-                setStarted(true);
-                startRef.current = Date.now();
+              const accepted = updateTypingValue(next, target);
+              if (accepted) {
+                window.requestAnimationFrame(() => {
+                  if (inputRef.current) {
+                    inputRef.current.selectionStart = inputRef.current.selectionEnd = start + 4;
+                  }
+                });
               }
             }
           }}

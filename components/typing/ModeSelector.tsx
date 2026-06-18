@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 export const MODES = [
   { id: "general",    emoji: "⚡", label: "General Speed",   sub: "QWERTY · Timed Test",      color: "#00E5FF" },
   { id: "government", emoji: "🏛️", label: "Govt. Exam Prep", sub: "SSC · RRB · CPCT · HC",    color: "#FFB800" },
@@ -13,9 +15,48 @@ export const MODES = [
 
 export type ModeId = typeof MODES[number]["id"];
 
+export const MODE_PATHS: Record<ModeId, string> = {
+  general: "/practice/general",
+  government: "/practice/government",
+  data: "/practice/data",
+  coding: "/practice/coding",
+  arabic: "/practice/arabic",
+  race: "/games/race",
+  falling: "/games/falling",
+  "word-builder": "/games/word-builder",
+};
+
 interface Props {
   selected:  ModeId;
   onSelect:  (id: ModeId) => void;
+}
+
+interface ModeNavProps {
+  selected: ModeId;
+}
+
+export function ModeNav({ selected }: ModeNavProps) {
+  return (
+    <div className="flex flex-wrap gap-2 mb-5">
+      {MODES.map((m) => {
+        const isActive = selected === m.id;
+        return (
+          <Link
+            key={m.id}
+            href={MODE_PATHS[m.id]}
+            style={{
+              borderColor: isActive ? m.color + "55" : "rgba(0,229,255,0.11)",
+              background:  isActive ? m.color + "15" : "#0F1A2B",
+              color:       isActive ? m.color : "#58698A",
+            }}
+            className="flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] font-semibold border transition-all hover:opacity-90">
+            <span>{m.emoji}</span>
+            <span>{m.label}</span>
+          </Link>
+        );
+      })}
+    </div>
+  );
 }
 
 export function ModeSelector({ selected, onSelect }: Props) {
