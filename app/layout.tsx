@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Navbar }    from "@/components/ui/Navbar";
 import { Providers } from "@/components/providers/SessionProvider";
+import Script from "next/script";
 
 export const metadata: Metadata = {
   title:       "TypeGuru — Master Typing with AI",
@@ -16,7 +17,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarneing>
       <body>
         <Providers>
           <Navbar />
@@ -26,6 +27,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             © {new Date().getFullYear()} TypeGuru · Made in India 🇮🇳 · Empowering 2.4 Lakh+ Typists
           </footer>
         </Providers>
+       {/* ✅ 2. Yeh script add karo — Providers ke baad, body close hone se pehle */}
+        <Script
+          src="https://pl29850353.effectivecpmnetwork.com/ec/1b/3b/ec1b3bd92701d7ac2480ac909626c101.js"
+          strategy="lazyOnload"
+        />
       </body>
     </html>
   );
